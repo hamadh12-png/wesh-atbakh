@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>وش أطبخ؟ — وصفات على قد ميزانيتك</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF6EC;
+    --ink:#211E1A;
+    --red:#C8402E;
+    --green:#4F7942;
+    --mustard:#C98A1A;
+    --line:#DCD2BC;
+    --card:#FFFEFA;
+    --sub:#8A7F6A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans Arabic',sans-serif; min-height:100vh;}
+  header{padding:38px 20px 16px; text-align:center;}
+  .eyebrow{font-size:12.5px; letter-spacing:.13em; color:var(--green); font-weight:600; margin-bottom:10px;}
+  h1{font-family:'Cairo',sans-serif; font-weight:900; font-size:clamp(28px,6vw,44px); margin:0 0 8px; line-height:1.15;}
+  h1 span{color:var(--red);}
+  header p{color:var(--sub); font-size:15px; max-width:460px; margin:0 auto;}
+
+  main{max-width:600px; margin:0 auto; padding:10px 18px 70px;}
+
+  .order-slip{
+    background:var(--card); border:1.5px solid var(--line); border-radius:16px;
+    padding:24px; box-shadow:0 2px 0 rgba(33,30,26,.03);
+  }
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:13.5px; font-weight:700; margin-bottom:7px; color:var(--ink);}
+  .field .hint{font-size:12px; color:var(--sub); margin-top:5px;}
+  input[type=number], input[type=text], textarea{
+    width:100%; font-family:'IBM Plex Sans Arabic',sans-serif; font-size:15px;
+    padding:12px 14px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--paper); color:var(--ink);
+  }
+  input:focus, textarea:focus{outline:2px solid var(--green); outline-offset:1px;}
+  textarea{min-height:64px; resize:vertical;}
+
+  .budget-row{display:flex; align-items:center; gap:10px;}
+  .budget-row input{font-family:'Space Mono',monospace; font-size:20px; font-weight:700; text-align:center;}
+  .sar{font-weight:700; color:var(--sub); font-size:14px; white-space:nowrap;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper);
+    font-size:13px; cursor:pointer; user-select:none; transition:.12s;
+  }
+  .chip.active{background:var(--green); color:#fff; border-color:var(--green);}
+
+  .go-btn{
+    width:100%; margin-top:6px; padding:15px; border:none; border-radius:12px;
+    background:var(--red); color:#fff; font-family:'Cairo',sans-serif; font-weight:800; font-size:16.5px;
+    cursor:pointer; transition:.12s transform;
+  }
+  .go-btn:active{transform:scale(.98);}
+  .go-btn:disabled{opacity:.55; cursor:default;}
+
+  /* receipt output */
+  #result{margin-top:26px;}
+  .receipt{
+    background:var(--card); border-radius:4px; position:relative;
+    padding:26px 22px 22px; margin:0 auto;
+    box-shadow:0 10px 24px rgba(33,30,26,.1);
+  }
+  .zigzag-top, .zigzag-bottom{
+    height:12px; width:100%;
+    background: linear-gradient(135deg, var(--paper) 25%, transparent 25%) -6px 0,
+                linear-gradient(-135deg, var(--paper) 25%, transparent 25%) -6px 0;
+    background-size:12px 12px; background-repeat:repeat-x;
+  }
+  .zigzag-bottom{transform:scaleY(-1);}
+  .receipt-body{padding:4px 4px 8px;}
+  .r-title{font-family:'Cairo',sans-serif; font-weight:900; font-size:21px; text-align:center; margin:6px 0 4px;}
+  .r-desc{font-size:13px; color:var(--sub); text-align:center; margin-bottom:16px;}
+  .r-badges{display:flex; justify-content:center; gap:8px; margin-bottom:18px; flex-wrap:wrap;}
+  .badge{
+    font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
+    padding:6px 10px; border-radius:8px; display:flex; align-items:center; gap:5px;
+  }
+  .badge.cost{background:#FBEAE6; color:var(--red);}
+  .badge.time{background:#EFF2E3; color:var(--green);}
+  .badge.cal{background:#FCF1DE; color:var(--mustard);}
+
+  .divider{border-top:1.5px dashed var(--line); margin:16px 0;}
+  .r-section-title{font-family:'Cairo',sans-serif; font-weight:800; font-size:14px; margin-bottom:10px; color:var(--ink);}
+  .ing-line{
+    display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+    font-size:13.5px; padding:5px 0; border-bottom:1px dotted var(--line);
+  }
+  .ing-line .name{flex:1;}
+  .ing-line .amt{color:var(--sub); font-size:12px; white-space:nowrap;}
+  .ing-line .price{font-family:'Space Mono',monospace; font-weight:700; color:var(--ink); white-space:nowrap;}
+  .total-line{
+    display:flex; justify-content:space-between; font-family:'Cairo',sans-serif; font-weight:800;
+    font-size:15px; margin-top:10px; padding-top:10px; border-top:2px solid var(--ink);
+  }
+  .total-line .price{font-family:'Space Mono',monospace;}
+
+  .steps{list-style:none; padding:0; margin:0; counter-reset:step;}
+  .steps li{
+    counter-increment:step; position:relative; padding:0 0 0 0; margin-bottom:14px;
+    padding-right:34px; font-size:14px; line-height:1.65;
+  }
+  .steps li::before{
+    content:counter(step); position:absolute; right:0; top:0;
+    width:24px; height:24px; border-radius:50%; background:var(--ink); color:var(--paper);
+    font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .state-msg{text-align:center; padding:30px 10px; color:var(--sub); font-size:14px;}
+  .spinner{
+    width:30px; height:30px; border:3px solid var(--line); border-top-color:var(--red);
+    border-radius:50%; margin:0 auto 14px; animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .again-btn{
+    display:block; width:100%; margin-top:18px; padding:12px; border-radius:10px;
+    border:1.5px solid var(--line); background:transparent; color:var(--ink);
+    font-family:'IBM Plex Sans Arabic',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;
+  }
+  footer{text-align:center; padding:0 20px 40px; color:#b3a98f; font-size:12px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">نموذج أولي</div>
+  <h1>وش <span>أطبخ</span> اليوم؟</h1>
+  <p>قول لنا ميزانيتك واللي عندك بالثلاجة، ونطلع لك وصفة كاملة بالمقادير والسعرات ووقت التحضير.</p>
+</header>
+
+<main>
+  <div class="order-slip" id="formCard">
+    <div class="field">
+      <label>ميزانيتك</label>
+      <div class="budget-row">
+        <input type="number" id="budget" placeholder="20" min="1">
+        <span class="sar">﷼ ريال</span>
+      </div>
+      <div class="hint">قدر تكلفة الوصفة اللي تبيها</div>
+    </div>
+
+    <div class="field">
+      <label>عندك مكونات جاهزة؟ (اختياري)</label>
+      <textarea id="ingredients" placeholder="مثال: أرز، بيض، بصل — أو سيبه فاضي ونقترح عليك كل شي"></textarea>
+    </div>
+
+    <div class="field">
+      <label>تفضيلات</label>
+      <div class="chips" id="chips">
+        <div class="chip" data-v="سريعة (أقل من ٢٠ دقيقة)">⏱ سريعة</div>
+        <div class="chip" data-v="بدون فرن">🔥 بدون فرن</div>
+        <div class="chip" data-v="نباتية">🥬 نباتية</div>
+        <div class="chip" data-v="بروتين عالي">💪 بروتين عالي</div>
+      </div>
+    </div>
+
+    <button class="go-btn" id="goBtn">ولّد لي وصفة 🍳</button>
+  </div>
+
+  <div id="result"></div>
+</main>
+
+<footer>الوصفات تُولَّد فعليًا بالذكاء الاصطناعي — ولو صار خلل بالاتصال، يستخدم الموقع قائمة احتياطية محلية تلقائيًا.</footer>
+
+<script>
+const budgetEl = document.getElementById('budget');
+const ingredientsEl = document.getElementById('ingredients');
+const chipsWrap = document.getElementById('chips');
+const goBtn = document.getElementById('goBtn');
+const result = document.getElementById('result');
+
+const activeChips = new Set();
+chipsWrap.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    chip.classList.toggle('active');
+    const v = chip.dataset.v;
+    if(activeChips.has(v)) activeChips.delete(v); else activeChips.add(v);
+  });
+});
+
+goBtn.addEventListener('click', generateRecipe);
+
+const RECIPES = [
+  {title:"بيض مقلي بالخبز والجبن", description:"فطور سريع يشبعك بأقل تكلفة", prep_time_minutes:10, calories:380, total_cost_sar:7,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","نباتية"],
+   ingredients:[{name:"بيض",amount:"٢ حبة",price_sar:3},{name:"خبز توست",amount:"٢ شريحة",price_sar:1},{name:"جبن شرائح",amount:"شريحة",price_sar:2},{name:"زيت",amount:"ملعقة",price_sar:1}],
+   steps:["سخّن ملعقة الزيت بمقلاة على نار متوسطة لمدة دقيقة تقريبًا حتى تلمع","اكسر البيض بالمقلاة مباشرة، وغطِّه إذا تبي الصفار ينضج من فوق، واتركه ٣-٤ دقائق بدون تحريك للحصول على قوام مقلي","بنفس الوقت حمّص شرائح الخبز بمحمصة أو مقلاة جافة ١-٢ دقيقة لكل وجه حتى يصير مقرمش","ضع شريحة الجبن على الخبز الساخن مباشرة عشان تذوب من حرارته","ضع البيض فوق الخبز والجبن وقدّمه فورًا وهو ساخن"]},
+
+  {title:"شكشوكة بالطماطم", description:"بيض مطبوخ بصلصة طماطم متبّلة", prep_time_minutes:15, calories:320, total_cost_sar:12,
+   tags:["بدون فرن","نباتية"],
+   ingredients:[{name:"بيض",amount:"٣ حبات",price_sar:4},{name:"طماطم",amount:"٢ حبة",price_sar:3},{name:"بصل",amount:"نصف حبة",price_sar:1},{name:"ثوم",amount:"فص",price_sar:1},{name:"بهارات",amount:"حسب الرغبة",price_sar:1}],
+   steps:["سخّن ملعقتين زيت بمقلاة على نار متوسطة، وقلّب البصل والثوم المفروم ٣-٤ دقائق حتى يذبل البصل ويصير شفاف","أضف الطماطم المقطعة مكعبات صغيرة والبهارات، واتركها على نار متوسطة ٨-١٠ دقائق مع التحريك أحيانًا حتى تتحول لصلصة سميكة وتقل رطوبتها","اعمل ٣ حفر صغيرة بالصلصة واكسر البيض بداخلها مباشرة (لا تخلطه مع الصلصة)","غطِّ المقلاة وخفف النار لهادئة، واتركها ٥-٧ دقائق حتى يتماسك بياض البيض ويبقى الصفار طري","ارفعها عن النار وقدّمها ساخنة بنفس المقلاة مع خبز للتغميس"]},
+
+  {title:"مكرونة بالتونة", description:"وجبة سريعة وشبعانة وغنية بالبروتين", prep_time_minutes:18, calories:520, total_cost_sar:15,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"مكرونة",amount:"كوب",price_sar:3},{name:"تونة معلبة",amount:"علبة",price_sar:6},{name:"صلصة طماطم",amount:"نصف كوب",price_sar:3},{name:"ثوم",amount:"فص",price_sar:1},{name:"زيت زيتون",amount:"ملعقة",price_sar:2}],
+   steps:["اغلي ماء بقدر مع رشة ملح، وضع المكرونة واسلقها ٩-١١ دقيقة (شوف مدة السلق المكتوبة على العلبة) حتى تصير طرية بس مو ذايبة","قبل ما تصفّي المكرونة، خذ نص كوب من ماء السلق واحفظه جانبًا","بمقلاة ثانية سخّن ملعقة زيت زيتون وقلّب الثوم المفروم ٣٠-٤٠ ثانية بس حتى تفوح رائحته ولا يحترق","أضف صلصة الطماطم والتونة المصفّاة، وحرّك واتركها على نار هادئة ٤-٥ دقائق حتى تتجانس","صفّي المكرونة وأضفها للصلصة مباشرة مع القليل من ماء السلق المحفوظ، وقلّب دقيقة حتى تتغطى المكرونة بالصلصة تمامًا","قدّمها ساخنة، وممكن تضيف رشة جبن بارميزان أو فلفل أسود فوقها"]},
+
+  {title:"شوربة عدس", description:"وجبة دافئة رخيصة ومشبعة", prep_time_minutes:25, calories:290, total_cost_sar:9,
+   tags:["نباتية"],
+   ingredients:[{name:"عدس أصفر",amount:"كوب",price_sar:4},{name:"بصل",amount:"حبة",price_sar:1},{name:"جزر",amount:"حبة",price_sar:1},{name:"كمون",amount:"ملعقة صغيرة",price_sar:1},{name:"ماء ومرقة",amount:"٤ أكواب",price_sar:2}],
+   steps:["اغسل العدس جيدًا بماء بارد حتى يصفو الماء من النشا","سخّن ملعقتين زيت بقدر، وقلّب البصل المفروم والجزر المبشور ٤-٥ دقائق على نار متوسطة حتى يلين البصل","أضف العدس والماء (أو المرقة) والكمون، وارفع النار حتى يغلي","خفف النار لهادئة جدًا وغطِّ القدر جزئيًا، واتركه يطبخ ٢٠-٢٥ دقيقة مع التحريك كل فترة حتى ينضج العدس تمامًا ويتفتت بسهولة","اهرس الشوربة بالخلاط أو بمهراس يدوي حتى تصير ناعمة، وإذا كانت ثقيلة أضف شوي ماء ساخن لضبط القوام","تبّلها بالملح والليمون حسب الرغبة وقدّمها ساخنة"]},
+
+  {title:"ساندويش دجاج مشوي", description:"بروتين عالي بدون فرن وبسرعة", prep_time_minutes:15, calories:420, total_cost_sar:16,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"صدر دجاج",amount:"قطعة",price_sar:8},{name:"خبز عربي",amount:"رغيف",price_sar:1},{name:"خس وطماطم",amount:"حسب الرغبة",price_sar:2},{name:"مايونيز",amount:"ملعقة",price_sar:1},{name:"بهارات",amount:"حسب الرغبة",price_sar:1}],
+   steps:["افرد صدر الدجاج على لوح تقطيع واضغطه قليلًا بشوكة عشان يتبل بالتساوي، ثم تبّله بالبهارات والملح من الوجهين","سخّن ملعقة زيت بمقلاة على نار متوسطة-عالية حتى تسخن جيدًا","ضع الدجاج واشويه ٦-٧ دقائق من كل وجه (حسب سماكة القطعة) حتى يصير لونه ذهبي من برّه وينضج تمامًا من جوّه — لو ما متأكد قطّع بالنص وشوف إن ما فيه لون وردي","اتركه يرتاح دقيقتين خارج المقلاة قبل التقطيع، هذا يخليه طري أكثر بدل ما يجف","قطّعه شرائح مائلة","سخّن الخبز العربي ٣٠ ثانية على المقلاة نفسها، وضع الخس والطماطم والصوص، ثم أضف شرائح الدجاج ولفّه"]},
+
+  {title:"فول مدمس", description:"وجبة سعودية كلاسيكية بأقل تكلفة ممكنة", prep_time_minutes:10, calories:310, total_cost_sar:6,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","نباتية"],
+   ingredients:[{name:"فول معلب",amount:"علبة",price_sar:3},{name:"ليمون",amount:"نصف حبة",price_sar:1},{name:"زيت زيتون",amount:"ملعقة",price_sar:1},{name:"ثوم",amount:"فص",price_sar:1}],
+   steps:["فرّغ علبة الفول بقدر صغير مع القليل من مائها (لا تصفّيها بالكامل)","سخّنه على نار هادئة ٥-٦ دقائق مع التحريك من وقت لوقت حتى يسخن جيدًا من الداخل","اهرسه هرسًا خفيفًا بظهر الملعقة (اترك بعض الحبات كاملة للقوام)، وإذا صار سميك زيادة أضف رشة ماء","أضف الثوم المهروس وعصير الليمون وزيت الزيتون وقلّب دقيقة أخرى على النار","تذوّقه واضبط الملح، وقدّمه ساخنًا مع خبز ورشة كمون إذا حبيت"]},
+
+  {title:"أرز بالخضار", description:"وجبة متكاملة نباتية وبدون فرن", prep_time_minutes:22, calories:400, total_cost_sar:12,
+   tags:["بدون فرن","نباتية"],
+   ingredients:[{name:"أرز",amount:"كوب",price_sar:3},{name:"خضار مشكلة مجمدة",amount:"كوب",price_sar:4},{name:"بصل",amount:"نصف حبة",price_sar:1},{name:"بهارات",amount:"حسب الرغبة",price_sar:1}],
+   steps:["اغسل الأرز بماء بارد ٢-٣ مرات حتى يصفو الماء من النشا، وانقعه بماء ١٠ دقائق إذا عندك وقت","سخّن ملعقتين زيت بقدر متوسط، وقلّب البصل ٣-٤ دقائق حتى يذبل ويصفر قليلًا","أضف الخضار المجمدة وقلّبها ٢-٣ دقائق حتى تسخن (ما تحتاج تسييح قبلها)","أضف الأرز المصفّى وقلّبه دقيقة مع الخضار عشان يتشرب النكهة، ثم أضف الماء (كوب ونص لكل كوب أرز تقريبًا) والبهارات والملح","اتركه يغلي على نار عالية، وبعدين خفف النار لأقل درجة وغطِّ القدر بإحكام ١٥-١٨ دقيقة بدون ما تفتح الغطاء","اطفي النار واتركه يرتاح مغطى ٥ دقائق قبل ما تقلّبه بشوكة وتقدّمه"]},
+
+  {title:"سلطة تونة بالخضار", description:"خفيفة، بروتين عالي، وبدون طبخ تقريبًا", prep_time_minutes:10, calories:280, total_cost_sar:14,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"تونة معلبة",amount:"علبة",price_sar:6},{name:"خس وخيار وطماطم",amount:"حسب الرغبة",price_sar:4},{name:"زيت زيتون وليمون",amount:"ملعقة",price_sar:2}],
+   steps:["اغسل الخس والخيار والطماطم جيدًا وقطّعها قطع صغيرة متقاربة الحجم","ضعها بطبق واسع، وأضف التونة المصفّاة من الزيت فوقها مباشرة","أضف زيت الزيتون وعصير الليمون والملح والفلفل الأسود","قلّب المكونات بلطف حتى تتوزع التونة والصوص بالتساوي بدون ما تهرس الخضار","قدّمها فورًا وهي طازجة (لا تحفظها مقلّبة لأن الخضار تطري بسرعة)"]},
+
+  {title:"دجاج بالفرن مع بطاطس", description:"وجبة دسمة وغنية بالبروتين لمن عنده فرن", prep_time_minutes:40, calories:560, total_cost_sar:20,
+   tags:["بروتين عالي"],
+   ingredients:[{name:"صدر دجاج",amount:"قطعتين",price_sar:12},{name:"بطاطس",amount:"٢ حبة",price_sar:3},{name:"زيت وبهارات",amount:"حسب الرغبة",price_sar:2},{name:"ثوم",amount:"فصين",price_sar:1}],
+   steps:["سخّن الفرن مسبقًا على ٢٠٠ درجة مئوية (شبّكه ١٠ دقائق قبل ما تدخل الصينية)","قطّع البطاطس أرباع، وتبّل الدجاج والبطاطس معًا بالزيت والثوم والبهارات والملح بوعاء واحد وقلّبهم زين حتى يتغطون بالتتبيلة","رتّبهم بصينية فرن بشكل متباعد (مو فوق بعض) عشان يتحمّرون بالتساوي","اخبزهم ٣٠-٣٥ دقيقة، وفي منتصف الوقت (بعد ١٥-١٨ دقيقة) اقلبهم مرة عشان يتحمّرون من الجهتين","تأكد إن الدجاج ناضج بقطع أثخن قطعة — إذا العصير يطلع صافي مو وردي، فهو جاهز","أخرج الصينية واتركها ترتاح ٣-٤ دقائق قبل التقديم"]},
+
+  {title:"مجدرة (عدس بالأرز)", description:"وجبة نباتية تقليدية رخيصة ومشبعة", prep_time_minutes:30, calories:410, total_cost_sar:10,
+   tags:["نباتية"],
+   ingredients:[{name:"عدس بني",amount:"كوب",price_sar:3},{name:"أرز",amount:"نصف كوب",price_sar:2},{name:"بصل مقرمش",amount:"حبة",price_sar:2},{name:"بهارات",amount:"حسب الرغبة",price_sar:1}],
+   steps:["اغسل العدس البني وضعه بقدر مع ضعف كميته ماء، واغليه على نار متوسطة ١٥-١٨ دقيقة حتى يبدأ يلين بس يظل متماسك شوي (لسا ما نضج بالكامل)","أضف الأرز المغسول والملح والبهارات لنفس القدر مع العدس، وأضف ماء إضافي لو احتجت (الأرز يحتاج قدر ماء مساوي له تقريبًا)","غطِّ القدر وخفف النار لهادئة جدًا، واتركه ١٨-٢٠ دقيقة بدون فتح الغطاء حتى يستوي الأرز والعدس معًا","بمقلاة منفصلة، قطّع البصل شرائح رفيعة جدًا وحمّره بزيت على نار متوسطة ١٠-١٢ دقيقة مع التحريك المستمر حتى يصير ذهبي غامق ومقرمش (احذر يحترق بالدقائق الأخيرة)","قدّم العدس والأرز بطبق وانثر البصل المقرمش فوقه مباشرة قبل التقديم"]},
+
+  {title:"بيض بالسبانخ", description:"إفطار سريع وصحي وغني بالبروتين", prep_time_minutes:12, calories:300, total_cost_sar:9,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","نباتية","بروتين عالي"],
+   ingredients:[{name:"بيض",amount:"٢ حبة",price_sar:3},{name:"سبانخ طازجة أو مجمدة",amount:"كوب",price_sar:3},{name:"ثوم",amount:"فص",price_sar:1},{name:"زيت",amount:"ملعقة",price_sar:1}],
+   steps:["سخّن ملعقة زيت بمقلاة على نار متوسطة، وقلّب الثوم المفروم ٣٠ ثانية بس حتى تفوح رائحته","أضف السبانخ (لو مجمدة خليها تسيح شوي قبل، ولو طازجة زيدها كاملة) وقلّبها ٢-٣ دقائق حتى تذبل وتقل بكميتها","اكسر البيض فوق السبانخ مباشرة بالمقلاة، وقلّبه بلطف مع السبانخ زي العجة","اتركه على نار متوسطة-هادئة ٢-٣ دقائق مع تحريك خفيف حتى يتماسك البيض بدون ما يجف زيادة","تبّله بالملح والفلفل الأسود وقدّمه ساخنًا"]},
+
+  {title:"كبدة مشوية بالخبز", description:"وجبة سريعة وغنية بالبروتين والحديد", prep_time_minutes:15, calories:350, total_cost_sar:14,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"كبدة دجاج",amount:"٢٠٠ غرام",price_sar:8},{name:"بصل",amount:"نصف حبة",price_sar:1},{name:"خبز عربي",amount:"رغيف",price_sar:1},{name:"بهارات وليمون",amount:"حسب الرغبة",price_sar:2}],
+   steps:["قطّع الكبدة قطع متوسطة واغسلها وجفّفها بورق مطبخ (تجفيفها يخليها تتحمر زين بدل ما تسلق)","سخّن ملعقتين زيت بمقلاة على نار عالية نسبيًا، وقلّب البصل ٢-٣ دقائق حتى يبدأ يذبل","ارفع النار للأعلى وأضف الكبدة، وشوّحها ٥-٧ دقائق فقط مع التقليب من وقت لوقت — لا تطبخها أكثر من كذا عشان ما تصير قاسية (يفضّل تكون وردية خفيفة من الداخل)","أطفي النار وتبّلها بالبهارات والملح والفلفل وعصير الليمون وقلّب سريعًا","قدّمها فورًا مع الخبز العربي والبصل المشوي"]},
+
+  {title:"كبسة لحم", description:"وجبة لحم غنم تقليدية مشبعة لوجبة دسمة", prep_time_minutes:50, calories:650, total_cost_sar:26,
+   tags:["بروتين عالي"],
+   ingredients:[{name:"لحم غنم",amount:"٣٠٠ غرام",price_sar:16},{name:"أرز بسمتي",amount:"كوب ونصف",price_sar:4},{name:"بصل وطماطم",amount:"حبة لكل",price_sar:2},{name:"بهارات كبسة",amount:"ملعقتين",price_sar:2}],
+   steps:["اغسل الأرز البسمتي وانقعه بماء ١٥-٢٠ دقيقة ثم صفّه جانبًا","سخّن ملعقتين زيت بقدر كبير على نار متوسطة-عالية، وحمّر قطع اللحم من كل الجهات ٥-٦ دقائق حتى يتغير لونها للبني (هذا يحبس النكهة بداخل اللحم)","أضف البصل المفروم وقلّبه مع اللحم ٣-٤ دقائق حتى يذبل، ثم أضف الطماطم وبهارات الكبسة","غطِّ اللحم بالماء (يغطيه بإصبعين تقريبًا)، واتركه يغلي ثم خفف النار وغطِّ القدر، واسلقه على نار هادئة ٤٥-٦٠ دقيقة حتى يصير اللحم طري جدًا ويتفكك بسهولة بالشوكة","أخرج قطع اللحم جانبًا، وقِس كمية المرق المتبقي — تحتاج مقدارين ماء/مرق لكل مقدار أرز تقريبًا (زيد ماء لو قل)","أضف الأرز المصفّى لنفس المرق، اتركه يغلي، وبعدين خفف النار لأقل درجة وغطِّ القدر بإحكام ١٨-٢٠ دقيقة بدون فتح الغطاء","بمقلاة منفصلة حمّر قطع اللحم المسلوقة ٢-٣ دقائق على نار عالية عشان تاخذ لون ذهبي من برّه، وقدّمها فوق الأرز"]},
+
+  {title:"ستيك لحم بالمقلاة", description:"وجبة سريعة وغنية بالبروتين بدون فرن", prep_time_minutes:15, calories:480, total_cost_sar:24,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"لحم بقري (ستيك)",amount:"قطعة ٢٠٠ غرام",price_sar:18},{name:"ثوم وزبدة",amount:"حسب الرغبة",price_sar:3},{name:"ملح وفلفل أسود",amount:"حسب الرغبة",price_sar:1}],
+   steps:["أخرج اللحم من الثلاجة ١٥-٢٠ دقيقة قبل الطبخ عشان يدفأ بدرجة حرارة الغرفة (يطبخ بالتساوي أكثر)، وجفّفه بورق مطبخ وتبّله بالملح والفلفل الأسود من الوجهين","سخّن المقلاة جدًا على نار عالية لمدة ٢-٣ دقائق قبل ما تحط اللحم (لازم تكون حامية بشكل ملحوظ)","ضع قطعة اللحم وسيبها بدون تحريك ٣-٤ دقائق حتى تتكون قشرة بنية من تحت، ثم اقلبها للوجه الثاني ٣-٤ دقائق أخرى (هذا يعطيك درجة نضج متوسطة تقريبًا — قلل الوقت لو تبيها أقل استواء)","بآخر دقيقة أضف الثوم المهروس وملعقة زبدة، ومِل المقلاة وصب الزبدة الذائبة فوق اللحم بملعقة بشكل مستمر","انقل اللحم لطبق واتركه يرتاح ٥ دقائق مغطى بورق قصدير قبل التقطيع — هذي الخطوة مهمة جدًا عشان العصارة توزع بالتساوي بدل ما تسيل وقت القطع"]},
+
+  {title:"لحم مفروم بالبطاطس (كفتة)", description:"وجبة عائلية بسيطة وشبعانة", prep_time_minutes:30, calories:520, total_cost_sar:19,
+   tags:["بروتين عالي"],
+   ingredients:[{name:"لحم مفروم",amount:"٢٥٠ غرام",price_sar:12},{name:"بطاطس",amount:"حبتين",price_sar:3},{name:"بصل وبقدونس",amount:"حسب الرغبة",price_sar:2},{name:"بهارات",amount:"حسب الرغبة",price_sar:2}],
+   steps:["اخلط اللحم المفروم مع البصل المبشور (اعصر الماء الزائد منه أولًا) والبقدونس المفروم والبهارات والملح بوعاء، واعجنهم بيدك دقيقة حتى يتجانسوا","شكّل الخليط كرات وافردها قليلًا بيدك المبللة لتصير أقراص مسطحة بسمك ١.٥ سم تقريبًا","سخّن ملعقتين زيت بمقلاة على نار متوسطة، وضع أقراص الكفتة واقليها ٤-٥ دقائق من كل وجه حتى تحمّر من برّه وتنضج من جوّه (اقطع وحدة للتأكد إن ما فيه لون وردي)","بمقلاة ثانية أو نفس المقلاة بعد إخراج الكفتة، اقلِ البطاطس المقطعة مكعبات على نار متوسطة ١٢-١٥ دقيقة مع التقليب من وقت لوقت حتى تحمّر وتنضج من الداخل","قدّم الكفتة مع البطاطس المقلية وسلطة جانبية إذا حبيت"]},
+
+  {title:"سمك مشوي بالليمون", description:"وجبة خفيفة وصحية وغنية بالبروتين", prep_time_minutes:20, calories:340, total_cost_sar:18,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"سمك (هامور أو بلطي)",amount:"قطعة ٣٠٠ غرام",price_sar:14},{name:"ليمون وثوم",amount:"حسب الرغبة",price_sar:2},{name:"زيت زيتون وبهارات",amount:"حسب الرغبة",price_sar:2}],
+   steps:["جفّف قطعة السمك جيدًا بورق مطبخ (السمك المبلل ما يتحمر زين)، وتبّله بالملح والفلفل والثوم المهروس وشوي عصير ليمون، واتركه يتشرب التتبيلة ١٠ دقائق","سخّن ملعقتين زيت زيتون بمقلاة مسطحة على نار متوسطة-عالية حتى يلمع الزيت","ضع السمك بالجهة اللي فيها الجلد أولًا (إذا فيه جلد) واتركه بدون تحريك ٤-٥ دقائق حتى يتحمر ويسهل رفعه من المقلاة لوحده (لو لسا لاصق يعني ما جاء وقته)","اقلبه بحذر واطبخ الوجه الثاني ٣-٤ دقائق إضافية حسب سمك القطعة، حتى يصير لون السمك أبيض معتم بالكامل من الداخل ويتفتت بسهولة بالشوكة","ارفعه فورًا (السمك يستمر ينضج بالحرارة المتبقية) وقدّمه مع شرائح ليمون طازج"]},
+
+  {title:"سمك مقلي بالأرز", description:"وجبة بحرية كلاسيكية ومشبعة", prep_time_minutes:28, calories:480, total_cost_sar:17,
+   tags:["بروتين عالي"],
+   ingredients:[{name:"سمك",amount:"قطعة ٢٥٠ غرام",price_sar:12},{name:"أرز",amount:"كوب",price_sar:3},{name:"بهارات سمك وطحين خفيف",amount:"حسب الرغبة",price_sar:2}],
+   steps:["اغسل الأرز وانقعه ١٠ دقائق ثم صفّه، واسلقه بقدر منفصل حسب الطريقة العادية (كوب أرز مع كوب ونص ماء تقريبًا، يغلي ثم يهدى ١٥-١٨ دقيقة مغطى)","بالتوازي، جفّف قطعة السمك وتبّلها بالملح وبهارات السمك من الوجهين، ثم رشّها بطبقة خفيفة جدًا من الطحين (ينفض الزيادة) — هذا يعطيها قشرة مقرمشة","سخّن كمية زيت كافية تغطي نص سمك القطعة تقريبًا بمقلاة على نار متوسطة-عالية حتى يسخن جيدًا (اختبره بقطعة طحين صغيرة، لو فرقعت فورًا يبقى جاهز)","اقلِ السمك ٣-٤ دقائق كل وجه حتى يصير لونه ذهبي مقرمش وينضج بالكامل من الداخل","ارفعه على ورق مطبخ ليمتص الزيت الزائد، وقدّمه فوق الأرز الساخن"]},
+
+  {title:"كبسة دجاج", description:"الطبق السعودي الأشهر بخطوات مبسطة", prep_time_minutes:45, calories:560, total_cost_sar:20,
+   tags:["بروتين عالي"],
+   ingredients:[{name:"دجاج",amount:"٤ قطع",price_sar:12},{name:"أرز بسمتي",amount:"كوب ونصف",price_sar:4},{name:"بصل وطماطم",amount:"حبة لكل",price_sar:2},{name:"بهارات كبسة",amount:"ملعقتين",price_sar:2}],
+   steps:["اغسل الأرز البسمتي وانقعه بماء ١٥ دقيقة ثم صفّه", "سخّن ملعقتين زيت بقدر كبير، وحمّر قطع الدجاج على نار متوسطة-عالية ٤-٥ دقائق كل وجه حتى يتغير لونها للذهبي (بدون ما تطبخها بالكامل، بس تتحمر من برّه)","أضف البصل المفروم وقلّبه ٣ دقائق حتى يذبل، ثم أضف الطماطم وبهارات الكبسة وقلّب دقيقة", "غطِّ الدجاج بالماء واتركه يغلي، ثم خفف النار وغطِّ القدر واسلقه ٢٠-٢٥ دقيقة حتى ينضج الدجاج تمامًا (العصير يطلع صافي لما تخزّه بسكين)","أخرج قطع الدجاج جانبًا، وقِس المرق المتبقي (تحتاج مقدارين مرق لكل مقدار أرز تقريبًا)، أضف الأرز المصفّى للمرق","اتركه يغلي ثم خفف النار لأقل درجة وغطِّ القدر بإحكام ١٨ دقيقة بدون فتحه","في آخر ٥ دقائق ضع قطع الدجاج فوق الأرز بنفس القدر عشان تسخن وتاخذ نكهة الأرز، ثم قدّمهم معًا"]},
+
+  {title:"شاورما دجاج منزلية", description:"بديل اقتصادي وسريع للشاورما الجاهزة", prep_time_minutes:18, calories:430, total_cost_sar:15,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"صدر دجاج",amount:"قطعة",price_sar:8},{name:"خبز عربي",amount:"رغيف",price_sar:1},{name:"ثوم وتتبيلة شاورما",amount:"حسب الرغبة",price_sar:2},{name:"مخلل وصوص",amount:"حسب الرغبة",price_sar:2}],
+   steps:["قطّع صدر الدجاج شرائح رفيعة قدر الإمكان (يسهل التقطيع لو الدجاج بارد شوي من الثلاجة)، وتبّله بتتبيلة الشاورما والثوم وشوي زيت، واتركه ١٠ دقائق إذا عندك وقت (يعطي نكهة أقوى)","سخّن ملعقة زيت بمقلاة واسعة على نار عالية حتى تسخن جيدًا","أضف شرائح الدجاج بطبقة واحدة (لا تكدسها فوق بعض عشان تتحمر مو تتبخر)، واقلِها ٥-٦ دقائق مع التقليب من وقت لوقت حتى يحمّر لونها وتنضج تمامًا من الداخل","سخّن الخبز العربي على نفس المقلاة ٢٠-٣٠ ثانية كل وجه","افرش الصوص والمخلل على الخبز، أضف الدجاج الساخن فوقهم، ولفّ الساندويش بإحكام"]},
+
+  {title:"ساندويش تونة بالخبز", description:"وجبة سريعة جدًا وبأقل تكلفة ممكنة", prep_time_minutes:8, calories:310, total_cost_sar:10,
+   tags:["سريعة (أقل من ٢٠ دقيقة)","بدون فرن","بروتين عالي"],
+   ingredients:[{name:"تونة معلبة",amount:"علبة",price_sar:6},{name:"خبز",amount:"رغيفين",price_sar:1},{name:"مايونيز وخس",amount:"حسب الرغبة",price_sar:2}],
+   steps:["افتح علبة التونة وصفّيها جيدًا من الزيت أو الماء الزائد بمصفاة صغيرة أو بالضغط عليها بملعقة","ضعها بوعاء صغير وافركها بالشوكة حتى تتفتت، ثم أضف المايونيز وقلّب حتى تتجانس (أضف رشة ليمون أو فلفل أسود لو حبيت)","وزّع خليط التونة على شريحة الخبز بالتساوي","رتّب أوراق الخس فوق التونة", "أغلق الساندويش بالشريحة الثانية واضغط عليه بخفة، وقدّمه فورًا أو قطّعه بالنص"]}
+];
+
+function scoreRecipe(recipe, budget, prefs, ingredientsText){
+  let score = 0;
+  const costDiff = Math.abs(recipe.total_cost_sar - budget);
+  score -= costDiff * 2;
+  if(recipe.total_cost_sar > budget * 1.4) score -= 15;
+
+  prefs.forEach(p=>{ if(recipe.tags.includes(p)) score += 12; else score -= 6; });
+
+  if(ingredientsText){
+    const text = ingredientsText.toLowerCase();
+    recipe.ingredients.forEach(ing=>{
+      if(text.includes(ing.name) || ing.name.split(' ').some(w=>text.includes(w))) score += 4;
+    });
+  }
+  score += Math.random()*3; // light shuffle among close matches
+  return score;
+}
+
+async function generateRecipe(){
+  const budget = parseFloat(budgetEl.value) || 20;
+  const ingredients = ingredientsEl.value.trim();
+  const prefs = [...activeChips];
+
+  goBtn.disabled = true;
+  result.innerHTML = `<div class="state-msg"><div class="spinner"></div>جارٍ تحضير الوصفة...</div>`;
+
+  try{
+    const response = await fetch('/api/generate-recipe', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ budget, ingredients, prefs: prefs.join('، ') })
+    });
+    if(!response.ok) throw new Error('server error');
+    const data = await response.json();
+    if(!data.recipe) throw new Error('no recipe');
+    renderRecipe(data.recipe);
+  }catch(err){
+    // fallback: local curated list, in case the AI backend is down or not deployed yet
+    await new Promise(res=>setTimeout(res, 400));
+    const ranked = [...RECIPES].sort((a,b)=> scoreRecipe(b,budget,prefs,ingredients) - scoreRecipe(a,budget,prefs,ingredients));
+    renderRecipe(ranked[0]);
+  }finally{
+    goBtn.disabled = false;
+  }
+}
+
+function renderRecipe(r){
+  const ingHtml = (r.ingredients||[]).map(i=>`
+    <div class="ing-line">
+      <span class="name">${escapeHtml(i.name)}</span>
+      <span class="amt">${escapeHtml(i.amount||'')}</span>
+      <span class="price">${(i.price_sar??0)} ﷼</span>
+    </div>`).join('');
+
+  const stepsHtml = (r.steps||[]).map(s=>`<li>${escapeHtml(s)}</li>`).join('');
+
+  result.innerHTML = `
+    <div class="receipt">
+      <div class="zigzag-top"></div>
+      <div class="receipt-body">
+        <div class="r-title">${escapeHtml(r.title||'وصفة')}</div>
+        <div class="r-desc">${escapeHtml(r.description||'')}</div>
+        <div class="r-badges">
+          <div class="badge cost">💰 ${r.total_cost_sar??'--'} ﷼</div>
+          <div class="badge time">⏱ ${r.prep_time_minutes??'--'} د</div>
+          <div class="badge cal">🔥 ${r.calories??'--'} سعرة</div>
+        </div>
+        <div class="divider"></div>
+        <div class="r-section-title">المقادير</div>
+        ${ingHtml}
+        <div class="total-line"><span>الإجمالي التقريبي</span><span class="price">${r.total_cost_sar??'--'} ﷼</span></div>
+        <div class="divider"></div>
+        <div class="r-section-title">طريقة التحضير</div>
+        <ol class="steps">${stepsHtml}</ol>
+      </div>
+      <div class="zigzag-bottom"></div>
+    </div>
+    <button class="again-btn" id="againBtn">ولّد وصفة ثانية 🔄</button>
+  `;
+  document.getElementById('againBtn').addEventListener('click', generateRecipe);
+  result.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
